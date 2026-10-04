@@ -69,3 +69,7 @@ CLAUDE_CODE_PROJECTS_LANG=en ./claude-code-projects.sh
 ```
 
 Para añadir un idioma, copia la tabla `i18n_en` del script, cámbiale el nombre por el código de dos letras (por ejemplo `i18n_fr`) y traduce los textos. Los textos que no traduzcas salen en inglés.
+
+## 📄 Licencia
+
+[MIT](LICENSE) © 2026 Frank Dovecote
