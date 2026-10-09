@@ -4,6 +4,8 @@
 
 Elige un proyecto de Claude Code desde la terminal y ábrelo al momento.
 
+![Menú de Claude Code Projects](docs/screenshot.png)
+
 ## ✨ Funcionalidad
 
 - **Todos tus proyectos en un menú**, los más recientes primero.

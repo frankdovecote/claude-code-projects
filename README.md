@@ -4,6 +4,8 @@
 
 Pick a Claude Code project from your terminal and open it right away.
 
+![Claude Code Projects menu](docs/screenshot.png)
+
 ## ✨ Features
 
 - **All your projects in one menu**, most recent first.
