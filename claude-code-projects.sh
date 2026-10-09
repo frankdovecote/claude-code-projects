@@ -1,13 +1,24 @@
 #!/usr/bin/env zsh
 
-version="1.0.0"
+version="1.1.0"
+
+# [EN] --version / -v: print the version and exit
+# [ES] --version / -v: muestra la versión y sale
+if [[ "$1" == (--version|-v) ]]; then
+  echo "claude-code-projects $version"
+  exit 0
+fi
 
 # [EN] One table per language (i18n_xx), looked up by the two-letter code; missing texts fall back to English.
-#      {app} is replaced with "Claude Code" and {n} with the number of changes.
+#      {app} is replaced with "Claude Code", {n} with the number of changes, {cmd} with the install command,
+#      {v} with the installed fzf version and {min} with the minimum one.
 # [ES] Una tabla por idioma (i18n_xx), buscada por el código de dos letras; los textos que falten salen en inglés.
-#      {app} se cambia por "Claude Code" y {n} por el número de cambios.
+#      {app} se cambia por "Claude Code", {n} por el número de cambios, {cmd} por el comando de instalación,
+#      {v} por la versión de fzf instalada y {min} por la mínima.
 typeset -A i18n_en=(
-  missing_deps    "Missing dependencies. Install: brew install fzf jq"
+  missing_deps    "Missing dependencies. Install: {cmd}"
+  missing_claude  "Claude Code not found (command: claude)"
+  old_fzf         "fzf {v} is too old, version {min} or newer is needed"
   no_config       "~/.claude.json not found"
   no_projects     "No saved Claude Code projects"
   title           "{app} Projects"
@@ -25,7 +36,9 @@ typeset -A i18n_en=(
 )
 
 typeset -A i18n_es=(
-  missing_deps    "Faltan dependencias. Instala: brew install fzf jq"
+  missing_deps    "Faltan dependencias. Instala: {cmd}"
+  missing_claude  "No se encontró Claude Code (comando: claude)"
+  old_fzf         "fzf {v} es demasiado antiguo, hace falta la versión {min} o posterior"
   no_config       "No se encontró ~/.claude.json"
   no_projects     "No hay proyectos guardados en Claude Code"
   title           "Proyectos {app}"
@@ -55,8 +68,38 @@ typeset -A t
 t=("${(@kv)i18n_en}")
 table=i18n_$lang; t+=("${(@kvP)table}")
 
+# [EN] Install command for the missing-dependencies message: brew on macOS; on Linux the package manager found (apt by default)
+# [ES] Comando de instalación para el aviso de dependencias: brew en macOS; en Linux el gestor de paquetes que haya (apt por defecto)
+if [[ "$(uname)" == "Darwin" ]]; then
+  install_cmd="brew install fzf jq"
+elif command -v dnf &>/dev/null; then
+  install_cmd="sudo dnf install fzf jq"
+elif command -v pacman &>/dev/null; then
+  install_cmd="sudo pacman -S fzf jq"
+else
+  install_cmd="sudo apt install fzf jq"
+fi
+
 if ! command -v fzf &>/dev/null || ! command -v jq &>/dev/null; then
-  echo "❌ $t[missing_deps]"
+  echo "❌ ${t[missing_deps]//\{cmd\}/$install_cmd}"
+  exit 1
+fi
+
+# [EN] Claude Code is needed to open the projects
+# [ES] Claude Code hace falta para abrir los proyectos
+if ! command -v claude &>/dev/null; then
+  echo "❌ $t[missing_claude]"
+  exit 1
+fi
+
+# [EN] The menu uses recent fzf options (--gutter needs 0.66.0), so older versions are rejected
+# [ES] El menú usa opciones recientes de fzf (--gutter necesita la 0.66.0), así que se rechazan las anteriores
+fzf_min_version=0.66.0
+fzf_version=${${(s: :)"$(fzf --version)"}[1]}
+autoload -Uz is-at-least
+if ! is-at-least $fzf_min_version $fzf_version; then
+  msg=${t[old_fzf]//\{v\}/$fzf_version}
+  echo "❌ ${msg//\{min\}/$fzf_min_version}"
   exit 1
 fi
 
@@ -148,7 +191,7 @@ while IFS=$'\t' read -r mtime project_path; do
   fi
 
   if git -C "$project_path" rev-parse --git-dir &>/dev/null; then
-    changes=$(git -C "$project_path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    changes=$(git -C "$project_path" status --porcelain -- . 2>/dev/null | wc -l | tr -d ' ')
     if (( changes > 0 )); then
       git_status="▲ ${t[unsaved]//\{n\}/$changes}"; color=$yellow
     else

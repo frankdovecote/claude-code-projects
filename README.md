@@ -18,7 +18,7 @@ Pick a Claude Code project from your terminal and open it right away.
 
 1. Reads the projects that Claude Code saves in `~/.claude.json`.
 2. Gets the date of the last session from the modification date of the project's most recent session file in `~/.claude/projects/`.
-3. Counts the changes in each project with `git status --porcelain`.
+3. Counts the changes inside each project's folder with `git status --porcelain`.
 4. Shows everything in an [fzf](https://github.com/junegunn/fzf) menu.
 5. When you pick a project, it goes into that folder and runs `claude` (or `claude --continue` with `Ctrl-R`).
 
@@ -29,22 +29,57 @@ Pick a Claude Code project from your terminal and open it right away.
 
 - macOS or Linux/WSL
 - zsh
-- [fzf](https://github.com/junegunn/fzf) and [jq](https://jqlang.github.io/jq/)
+- [fzf](https://github.com/junegunn/fzf) 0.66.0 or newer, and [jq](https://jqlang.github.io/jq/)
 - [Claude Code](https://claude.com/claude-code) (the `claude` command)
 - git (optional, only used for the git status)
 
 ```sh
-brew install fzf jq
+brew install fzf jq        # macOS
+sudo apt install fzf jq    # Debian / Ubuntu
 ```
+
+> [!WARNING]
+> The menu needs fzf 0.66.0 or newer, and the version in apt is often older. Check yours with `fzf --version`; if it is too old, install a newer one from the [fzf releases](https://github.com/junegunn/fzf/releases).
 
 > [!IMPORTANT]
 > You need a terminal with 24-bit color (truecolor), such as iTerm2, Ghostty, WezTerm or Kitty. Otherwise the colors will look wrong.
 
+## 📦 Installation
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/frankdovecote/claude-code-projects/main/install.sh | sh
+```
+
+It installs `claude-code-projects` in `~/.local/bin`, and warns you if a requirement is missing or if that folder is not in your `PATH`.
+
+To use another folder, set `INSTALL_DIR` right before `sh` (not before `curl`):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/frankdovecote/claude-code-projects/main/install.sh | INSTALL_DIR=$HOME/bin sh
+```
+
+Or clone the repo and link the script, so `git pull` updates it:
+
+```sh
+git clone https://github.com/frankdovecote/claude-code-projects.git
+mkdir -p ~/.local/bin
+ln -s "$PWD/claude-code-projects/claude-code-projects.sh" ~/.local/bin/claude-code-projects
+```
+
+To uninstall, delete the file (use the folder you installed it in):
+
+```sh
+rm ~/.local/bin/claude-code-projects
+```
+
 ## 🚀 Usage
 
 ```sh
-./claude-code-projects.sh
+claude-code-projects
 ```
+
+> [!NOTE]
+> Running it from a cloned repo without installing it? Use `./claude-code-projects.sh` instead.
 
 | Key                     | Action                                        |
 | ----------------------- | --------------------------------------------- |
@@ -54,19 +89,23 @@ brew install fzf jq
 | `Esc`                   | Quit                                          |
 
 > [!TIP]
-> To run it from anywhere, add an alias to your `~/.zshrc`:
+> For a shorter name, add an alias to your `~/.zshrc`:
 >
 > ```sh
-> alias ccp="/path/to/claude-code-projects.sh"
+> alias ccp="claude-code-projects"
 > ```
+>
+> `claude-code-projects --version` shows the installed version.
 
 ### 🌍 Language
 
 The script uses your terminal's language, or the system language on macOS. If that language isn't available, it uses English. To pick one yourself:
 
 ```sh
-CLAUDE_CODE_PROJECTS_LANG=es ./claude-code-projects.sh
+CLAUDE_CODE_PROJECTS_LANG=es claude-code-projects
 ```
+
+From a cloned repo without installing, use `CLAUDE_CODE_PROJECTS_LANG=es ./claude-code-projects.sh`.
 
 To add a language, copy the `i18n_en` table in the script, rename it with the two-letter code (for example `i18n_fr`) and translate the texts. Any text you leave out is shown in English.
 
