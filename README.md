@@ -2,6 +2,11 @@
 
 🇬🇧 **English** · 🇪🇸 [Español](README.es.md)
 
+[![version](https://img.shields.io/github/v/release/frankdovecote/claude-code-projects?style=plastic)](https://github.com/frankdovecote/claude-code-projects/releases)
+[![license](https://img.shields.io/github/license/frankdovecote/claude-code-projects?style=plastic)](LICENSE)
+![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-blue?style=plastic)
+![languages](https://img.shields.io/badge/languages-English%20%7C%20Espa%C3%B1ol-green?style=plastic)
+
 Pick a Claude Code project from your terminal and open it right away.
 
 ![Claude Code Projects menu](docs/screenshot.png)
