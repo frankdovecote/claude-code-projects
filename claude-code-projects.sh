@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-version="1.1.0"
+version="1.1.1"
 
 # [EN] --version / -v: print the version and exit
 # [ES] --version / -v: muestra la versión y sale
@@ -139,10 +139,10 @@ bold=$'\e[1m'; reset=$'\e[0m'; reset_fg=$'\e[39m'
 # [ES] Colores para fzf (hexadecimal)
 fzf_orange='#D77757'; fzf_border='#888888'; fzf_highlight='#B1B9F9'; fzf_selection='#373737'
 
-title=" ${orange}✻${reset} ${white}${t[title]//\{app\}/${reset}${bold}Claude Code${reset}${white}}${reset}"
+title="${orange}✻${reset} ${white}${t[title]//\{app\}/${reset}${bold}Claude Code${reset}${white}}${reset}"
 # [EN] The same title without colors, to measure its width
 # [ES] El mismo título sin colores, para medir su ancho
-title_text=" ✻ ${t[title]//\{app\}/Claude Code}"
+title_text="✻ ${t[title]//\{app\}/Claude Code}"
 header="${green}Enter${reset} ${gray}${t[open]}${reset}${gray}  ·  ${reset}${yellow}Ctrl-R${reset} ${gray}${t[resume]}${reset}${gray}  ·  ${reset}${violet}Esc${reset} ${gray}${t[quit]}${reset}"
 
 # [EN] Only folders that exist, with the date of their last session ("date<TAB>path"), most recent first.
@@ -209,19 +209,16 @@ while IFS=$'\t' read -r mtime project_path; do
   rows+=$(printf '%s\t%s\t%-*s   %-16s   %s   %s' "$mtime" "$project_path" "$name_width" "${project_path:t}" "$last_session" "$git_status" "${gray}${${project_path:h}/#$HOME/~}${reset_fg}")$'\n'
 done <<< "$projects"
 
-# [EN] Title with the version on the right and a solid line below (cleared when the menu closes)
-#      title_pad: spaces up to the version ("v" + right margin); without room, the version is not shown
-# [ES] Título con la versión a la derecha y una línea continua debajo (se borra al cerrar el menú)
-#      title_pad: espacios hasta la versión ("v" + margen derecho); si no cabe, no se muestra la versión
-cols=$(tput cols)
-title_pad=$(( cols - ${#title_text} - ${#version} - 2 ))
-print
-if (( title_pad > 0 )); then
-  print -r -- "${title}${(l:$title_pad:: :)}${gray}v${version}${reset}"
-else
-  print -r -- "$title"
-fi
-print -r -- "${gray}${(l:$cols::─:)}${reset}"
+# [EN] Title with the version on the right, drawn by fzf as its footer (shown on top, above a solid line).
+#      It is redrawn on start and on every resize, so it always fits the window; without room, the version is not shown.
+#      --footer sets it from the beginning too, so fzf counts its line when working out the menu's height.
+#      title_pad: spaces up to the version (the window width minus title, "v" + version, left indent and right margin)
+# [ES] Título con la versión a la derecha, que fzf dibuja como su pie (sale arriba, sobre una línea continua).
+#      Se redibuja al arrancar y en cada cambio de tamaño, así que siempre cabe en la ventana; si no cabe, no se muestra la versión.
+#      --footer lo pone también desde el principio, para que fzf cuente su línea al calcular la altura del menú.
+#      title_pad: espacios hasta la versión (el ancho de la ventana menos título, "v" + versión, sangría izquierda y margen derecho)
+export CCP_TITLE="$title" CCP_VERSION="${gray}v${version}${reset}" CCP_TITLE_WIDTH=$(( ${#title_text} + ${#version} + 4 ))
+title_footer='title_pad=$((FZF_COLUMNS - CCP_TITLE_WIDTH)); if [ $title_pad -gt 0 ]; then printf "%s%*s%s" "$CCP_TITLE" $title_pad "" "$CCP_VERSION"; else printf "%s" "$CCP_TITLE"; fi'
 
 local output
 output=$(print -rn -- "$rows" | fzf \
@@ -231,7 +228,11 @@ output=$(print -rn -- "$rows" | fzf \
   --expect ctrl-r \
   --tac \
   --header-lines 1 \
-  --bind 'start:last' \
+  --with-shell 'sh -c' \
+  --bind "start:last+transform-footer:$title_footer" \
+  --bind "resize:transform-footer:$title_footer" \
+  --footer "$title" \
+  --footer-border line \
   --info inline-right \
   --no-separator \
   --highlight-line \
@@ -244,12 +245,9 @@ output=$(print -rn -- "$rows" | fzf \
   --prompt '❯ ' \
   --pointer '❯' \
   --gutter ' ' \
+  --ellipsis '…' \
   --padding 1,0,0,0 \
-  --color "prompt:$fzf_border,pointer:$fzf_orange,query:regular:-1,input-border:$fzf_border,hl:$fzf_highlight,hl+:$fzf_highlight,bg+:$fzf_selection,gutter:-1,info:$fzf_border")
-
-# [EN] Clear the title (blank line + title + solid line)
-# [ES] Borra el título (línea en blanco + título + línea continua)
-printf '\e[3A\e[J'
+  --color "prompt:$fzf_border,pointer:$fzf_orange,query:regular:-1,input-border:$fzf_border,hl:$fzf_highlight,hl+:$fzf_highlight,bg+:$fzf_selection,gutter:-1,info:$fzf_border,footer:-1,footer-border:$fzf_border")
 
 if [[ -z "$output" ]]; then
   echo "👋 $t[goodbye]"
